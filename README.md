@@ -1,6 +1,13 @@
-# Project local-storage-server
+# Local Storage Server
 
-One Paragraph of project description goes here
+## Overview
+This project is a local storage server built with Go, providing file upload and download functionality over the network. The server also serves a simple Vue.js frontend for interacting with the API.
+
+## Features
+- Upload files to the server.
+- Download files from the server.
+- Simple health check endpoint.
+- Vue.js frontend served over the `/` path.
 
 ## Getting Started
 
@@ -21,16 +28,6 @@ make build
 run the application
 ```bash
 make run
-```
-
-Create DB container
-```bash
-make docker-run
-```
-
-Shutdown DB container
-```bash
-make docker-down
 ```
 
 live reload the application
