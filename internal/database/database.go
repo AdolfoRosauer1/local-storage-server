@@ -19,6 +19,15 @@ type Service interface {
 	// The keys and values in the map are service-specific.
 	Health() map[string]string
 
+	// AddFile records a file in the db and returns its id
+	AddFile(file FileToAdd) error
+
+	// ListFiles returns a list of all available files
+	ListFiles() ([]File, error)
+
+	// GetFile returns the file for an id in the db
+	GetFile(id int) (File, error)
+
 	// Close terminates the database connection.
 	// It returns an error if the connection cannot be closed.
 	Close() error
@@ -39,6 +48,7 @@ func New() Service {
 		return dbInstance
 	}
 
+	// Open the Connection
 	db, err := sql.Open("sqlite3", dburl)
 	if err != nil {
 		// This will not be a connection error, but a DSN parse error or
@@ -46,6 +56,13 @@ func New() Service {
 		log.Fatal(err)
 	}
 
+	// Make sure schema is initialized
+	err = InitSchema(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Serve
 	dbInstance = &service{
 		db: db,
 	}
@@ -110,4 +127,56 @@ func (s *service) Health() map[string]string {
 func (s *service) Close() error {
 	log.Printf("Disconnected from database: %s", dburl)
 	return s.db.Close()
+}
+
+// AddFile Record the path, type, size for a file to store.
+// Returns the new ID for the file or an error
+func (s *service) AddFile(toAdd FileToAdd) error {
+	query := `INSERT INTO files (name, path, type, size) VALUES (?, ?, ?, ?)`
+
+	_, err := s.db.Exec(query, toAdd.Name, toAdd.Path, toAdd.Type, toAdd.Size)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ListFiles Lists all available files.
+func (s *service) ListFiles() ([]File, error) {
+	query := `SELECT * FROM files`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var files []File
+
+	for rows.Next() {
+		var file File
+		err = rows.Scan(&file.ID, &file.Name, &file.Path, &file.Type, &file.Size, &file.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, file)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func (s *service) GetFile(id int) (File, error) {
+	query := `SELECT * FROM files WHERE id=?`
+	var toReturn File
+	err := s.db.QueryRow(query, id).Scan(&toReturn.ID, &toReturn.Name, &toReturn.Path, &toReturn.Type, &toReturn.Size, &toReturn.CreatedAt)
+	if err != nil {
+		return File{}, err
+	}
+	return toReturn, nil
 }
