@@ -3,6 +3,7 @@
 ## Overview
 This project is a local storage server built with Go, providing file upload and download functionality over the network. The server also serves a simple Vue.js frontend for interacting with the API.
 
+It makes use of a SQLite instance to keep track of uploaded files over time and on startup.
 ## Features
 - Upload files to the server.
 - Download files from the server.
