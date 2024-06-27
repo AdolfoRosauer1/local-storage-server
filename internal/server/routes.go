@@ -51,6 +51,8 @@ func (s *Server) uploadFileHandler(c *gin.Context) {
 		var path string
 		path, err = filepath.Abs("store")
 
+		path = filepath.Join(path, file.Filename)
+
 		toAdd := database.FileToAdd{
 			Name: file.Filename,
 			Path: path,
@@ -63,7 +65,7 @@ func (s *Server) uploadFileHandler(c *gin.Context) {
 			c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
 			return
 		}
-		err = c.SaveUploadedFile(file, path+"/"+file.Filename)
+		err = c.SaveUploadedFile(file, path)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{})
 			return
