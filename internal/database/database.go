@@ -28,6 +28,10 @@ type Service interface {
 	// GetFile returns the file for an id in the db
 	GetFile(id int) (File, error)
 
+	// DeleteFile deletes the file for the given id.
+	// Returns an error otherwise
+	DeleteFile(id int) error
+
 	// Close terminates the database connection.
 	// It returns an error if the connection cannot be closed.
 	Close() error
@@ -179,4 +183,13 @@ func (s *service) GetFile(id int) (File, error) {
 		return File{}, err
 	}
 	return toReturn, nil
+}
+
+func (s *service) DeleteFile(id int) error {
+	query := `DELETE FROM files WHERE id=?`
+	_, err := s.db.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	return nil
 }

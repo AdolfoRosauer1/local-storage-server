@@ -3,6 +3,7 @@ package server
 import (
 	"local-storage-server/internal/database"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strconv"
 
@@ -23,6 +24,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.GET("/api/files", s.listFilesHandler)
 	r.GET("/api/files/:id", s.getFileHandler)
 	r.POST("/api/files", s.uploadFileHandler)
+	r.DELETE("/api/files/:id", s.deleteFileHandler)
 
 	return r
 }
@@ -92,6 +94,32 @@ func (s *Server) getFileHandler(c *gin.Context) {
 	c.FileAttachment(file.Path, file.Name)
 	c.JSON(http.StatusOK, gin.H{})
 	return
+}
+
+func (s *Server) deleteFileHandler(c *gin.Context) {
+	id := c.Param("id")
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	file, err := s.db.GetFile(intId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "File not found"})
+	}
+
+	err = s.db.DeleteFile(intId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "File not found"})
+	}
+
+	err = os.RemoveAll(file.Path)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "File not found"})
+	}
+
+	c.JSON(http.StatusOK, gin.H{})
 }
 
 func (s *Server) listFilesHandler(c *gin.Context) {
